@@ -17,6 +17,9 @@ dotenv_path=BASE_DIR / ".env"
 
 load_dotenv(dotenv_path, override=True)
 
+#--- Secret Key ------------------------------------------------------------
+SECRET_KEY = os.getenv("SECRET_KEY", "")
+
 # --- Groq -----------------------------------------------------------------
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")

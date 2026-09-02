@@ -19,24 +19,26 @@ def _now() -> str:
 
 # --- conversations ----------------------------------------------------
 
-def create_conversation(title: str = "New conversation") -> dict:
+def create_conversation(visitor_id: str, title: str = "New conversation") -> dict:
     convo_id = str(uuid.uuid4())
     now = _now()
     with get_db() as conn:
         conn.execute(
-            "INSERT INTO conversations (id, title, created_at, updated_at) "
-            "VALUES (?, ?, ?, ?)",
-            (convo_id, title, now, now),
+            "INSERT INTO conversations (id, visitor_id, title, created_at, updated_at) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (convo_id, visitor_id, title, now, now),
         )
-    return {"id": convo_id, "title": title, "created_at": now, "updated_at": now}
+    return {"id": convo_id, "visitor_id": visitor_id, "title": title, "created_at": now, "updated_at": now}
 
 
-def list_conversations() -> list[dict]:
+def list_conversations(visitor_id: str) -> list[dict]:
     """Every conversation, newest first, with a one-line preview."""
     with get_db() as conn:
         rows = conn.execute(
             "SELECT id, title, updated_at FROM conversations "
-            "ORDER BY updated_at DESC"
+            "WHERE visitor_id = ?"
+            "ORDER BY updated_at DESC",
+            (visitor_id,)
         ).fetchall()
 
         result = []
@@ -55,22 +57,24 @@ def list_conversations() -> list[dict]:
         return result
 
 
-def get_conversation(convo_id: str) -> dict | None:
+def get_conversation(convo_id: str, visitor_id: str) -> dict | None:
     with get_db() as conn:
         convo = conn.execute(
-            "SELECT * FROM conversations WHERE id = ?", (convo_id,)
+            "SELECT * FROM conversations WHERE id = ? AND visitor_id = ?", (convo_id, visitor_id)
         ).fetchone()
+        
         if not convo:
             return None
 
         messages = conn.execute(
             "SELECT role, content, attachment, attachment_path, created_at "
             "FROM messages WHERE conversation_id = ? ORDER BY id ASC",
-            (convo_id,),
+            (convo_id,)
         ).fetchall()
 
         return {
             "id": convo["id"],
+            "visitor_id": convo["visitor_id"],
             "title": convo["title"],
             "messages": [dict(m) for m in messages],
         }

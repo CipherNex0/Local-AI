@@ -17,6 +17,7 @@ from config import DB_PATH
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS conversations (
     id         TEXT PRIMARY KEY,
+    visitor_id    TEXT NOT NULL,
     title      TEXT NOT NULL,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL

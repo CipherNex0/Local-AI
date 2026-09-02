@@ -7,6 +7,7 @@ GET  /api/uploads/<name>   download a previously uploaded attachment
 from flask import Blueprint, jsonify, request, send_file
 
 from services import conversation_service, file_service
+from services.session_service import get_visitor_id
 from services.ai_service import AiNotConfigured, AiRequestError
 from services.file_service import UploadRejected
 
@@ -16,6 +17,7 @@ chat_bp = Blueprint("chat", __name__, url_prefix="/api")
 @chat_bp.post("/chat")
 def send_chat_message():
     data = request.get_json(silent=True) or {}
+    visitor_id = get_visitor_id()
     convo_id = data.get("conversation_id")
     text = (data.get("text") or "").strip()
     attachment = data.get("attachment")
@@ -28,7 +30,7 @@ def send_chat_message():
 
     try:
         result = conversation_service.send_message(
-            convo_id, text, attachment, attachment_path
+            visitor_id, convo_id, text, attachment, attachment_path
         )
     except conversation_service.ConversationNotFound:
         return jsonify({"error": "Unknown conversation_id"}), 400

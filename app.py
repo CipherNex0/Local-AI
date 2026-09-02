@@ -17,6 +17,13 @@ from routes import chat_bp, conversations_bp, pages_bp
 def create_app() -> Flask:
     app = Flask(__name__)
 
+    if not config.SECRET_KEY:
+        raise RuntimeError(
+            "SECRET_KEY is missing. Add it to your environment variables."
+        )
+
+    app.secret_key = config.SECRET_KEY
+
     app.register_blueprint(pages_bp)
     app.register_blueprint(chat_bp)
     app.register_blueprint(conversations_bp)

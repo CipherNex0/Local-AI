@@ -9,7 +9,7 @@ a chat turn around the AI call.
 """
 
 from database import models
-from services import ai_service, document_service
+from services import ai_service, document_service, session_service
 
 
 TITLE_MAX_LEN = 34
@@ -30,19 +30,20 @@ def get_conversation(convo_id: str) -> dict | None:
     return models.get_conversation(convo_id)
 
 
-def get_initial_state(requested_id: str | None = None) -> dict:
+def get_initial_state(visitor_id: str, requested_id: str | None = None) -> dict:
     """
     Used by the page route to render the first paint: guarantees at
     least one conversation exists, and picks which one is active.
     """
-    conversations = models.list_conversations()
+    conversations = models.list_conversations(visitor_id)
 
     if not conversations:
-        models.create_conversation("New conversation")
-        conversations = models.list_conversations()
+        models.create_conversation(visitor_id, "New conversation")
+
+        conversations = models.list_conversations(visitor_id)
 
     active_id = requested_id or conversations[0]["id"]
-    active = models.get_conversation(active_id) or models.get_conversation(conversations[0]["id"])
+    active = models.get_conversation(active_id, visitor_id) or models.get_conversation(conversations[0]["id"], visitor_id)
 
     return {"conversations": conversations, "active": active}
 
@@ -85,6 +86,7 @@ class ConversationNotFound(ValueError):
 
 
 def send_message(
+        visitor_id: str,
     convo_id: str,
     text: str,
     attachment: str | None = None,
@@ -98,7 +100,7 @@ def send_message(
     Raises ConversationNotFound, ai_service.AiNotConfigured, or
     ai_service.AiRequestError — routes translate these to HTTP codes.
     """
-    convo = models.get_conversation(convo_id)
+    convo = models.get_conversation(convo_id, visitor_id)
     if not convo:
         raise ConversationNotFound(convo_id)
 
@@ -139,7 +141,7 @@ The file could not be read:
     models.add_message(convo_id, "user", text, attachment, attachment_path)
 
     # Get the conversation history
-    history = models.get_conversation(convo_id)["messages"]
+    history = models.get_conversation(convo_id, visitor_id)["messages"]
 
     # Replace the latest user message with the AI-enriched version.
     if history:
@@ -153,5 +155,5 @@ The file could not be read:
 
     return {
         "reply": reply,
-        "conversation": models.get_conversation(convo_id),
+        "conversation": models.get_conversation(convo_id, visitor_id),
     }
