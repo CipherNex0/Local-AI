@@ -53,6 +53,6 @@ MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10 MB
 
 # --- Flask ----------------------------------------------------------------
 
-HOST = os.getenv("HOST", "127.0.0.1")
+HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", "8000"))
-DEBUG = os.getenv("FLASK_DEBUG", "1") == "1"
+DEBUG = os.getenv("FLASK_DEBUG", "0") == "1"
