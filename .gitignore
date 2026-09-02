@@ -1,7 +1,16 @@
+# Environment secrets
 .env
+
+# Virtual environment
 .venv/
+
+# Python cache
 __pycache__/
-*.pyc
+*.py[cod]
+
+# SQLite databases
 *.db
+
+# Uploaded user files
 uploads/*
 !uploads/.gitkeep
