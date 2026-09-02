@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zora AI</title>
+
+<link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon_io/favicon-32x32.png') }}">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='images/favicon_io/apple-touch-icon.png') }}">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <div class="sidebar-top">
+      <a href="{{ url_for('pages.index') }}" class="brand">
+        <span>Zora</span>
+      </a>
+
+      <button class="new-chat" id="newChatBtn">
+        <span class="plus">+</span>
+        New conversation
+      </button>
+    </div>
+
+    <div class="conversation-section">
+      <p class="sidebar-label">Recent</p>
+      <div class="conversation-list" id="conversationList">
+        {% for convo in conversations %}
+        <button class="conversation{% if active and convo.id == active.id %} active{% endif %}" data-id="{{ convo.id }}">
+          <span class="conversation-text">{{ convo.title }}</span>
+          <span class="conversation-preview">{{ convo.preview }}</span>
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="sidebar-bottom">
+      <div class="user-profile">
+        <div class="user-avatar">A</div>
+        <div class="user-info">
+          <strong>Arclane.</strong>
+          <span>Premium Plan</span>
+        </div>
+        <button class="more-btn" id="userMoreBtn" aria-haspopup="true" aria-expanded="false">&bull;&bull;&bull;</button>
+
+        <div class="dropdown" id="userDropdown">
+          <button data-action="toggle-theme">Switch to light theme</button>
+          <button data-action="export-all">Export all conversations</button>
+          <button data-action="clear-all" class="danger">Clear all conversations</button>
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- MAIN CHAT -->
+  <main class="main-content">
+
+    <header class="topbar">
+      <div class="chat-title">
+        <div>
+          <h1 id="conversationTitle">{{ active.title if active else "Zora AI" }}</h1>
+          <div class="status">
+            <span class="status-dot" id="statusDot"></span>
+            <span id="status">Online</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <div class="menu-wrap">
+          <button class="icon-btn" id="settingsBtn" title="Settings" aria-haspopup="true" aria-expanded="false">&#9881;</button>
+          <div class="dropdown" id="settingsDropdown">
+            <button data-action="toggle-theme">Switch to light theme</button>
+            <button data-action="clear-conversation">Clear this conversation</button>
+          </div>
+        </div>
+
+        <div class="menu-wrap">
+          <button class="icon-btn" id="moreBtn" title="More options" aria-haspopup="true" aria-expanded="false">&bull;&bull;&bull;</button>
+          <div class="dropdown" id="moreDropdown">
+            <button data-action="rename">Rename conversation</button>
+            <button data-action="export-one">Export this conversation</button>
+            <button data-action="delete" class="danger">Delete conversation</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section id="messages" class="messages">
+      {% if active and active.messages %}
+        {% for m in active.messages %}
+        <div class="message-row{% if m.role == 'user' %} user-row{% endif %}">
+          <div class="msg {{ m.role }}">{{ m.content }}
+            {% if m.attachment %}<div class="msg-attachment">&#128206; {{ m.attachment }}</div>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      {% endif %}
+    </section>
+
+    <div class="composer-wrapper">
+
+      <div id="attachChip" class="attach-chip hidden">
+        <span id="attachName"></span>
+        <button id="attachRemove" title="Remove attachment">&times;</button>
+      </div>
+
+      <div class="composer">
+        <span class="prompt-glyph">&gt;</span>
+        <textarea id="input" placeholder="Message Zora..." rows="1"></textarea>
+
+        <div class="composer-actions">
+          <input type="file" id="fileInput" hidden>
+          <button class="attach-btn" id="attachBtn" title="Attach file">+</button>
+          <button id="sendBtn" class="send-btn" title="Send message">&#9654;</button>
+        </div>
+      </div>
+
+      <p class="disclaimer">Zora AI can make mistakes. Verify important information.</p>
+    </div>
+
+  </main>
+</div>
+
+<template id="welcomeTemplate">
+  <div class="welcome-message">
+    <div class="welcome-icon">
+          <img src="{{ url_for('static', filename='images/favicon_io/android-chrome-192x192.png') }}" alt="Zora AI logo">
+        </div>
+    <h2>How can I help you today?</h2>
+    <p>Ask questions, explore ideas, solve problems, and build something meaningful.</p>
+
+    <div class="suggestions">
+      <button class="suggestion-card" data-prompt="Help me design a scalable AI system architecture for a project I'm starting.">
+        <span>&#10022;</span>
+        <div><strong>Design a system</strong><small>Plan a scalable AI architecture</small></div>
+      </button>
+      <button class="suggestion-card" data-prompt="I want to build an automation with n8n. Help me turn my idea into a working workflow.">
+        <span>&#8984;</span>
+        <div><strong>Build something</strong><small>Turn an idea into a project</small></div>
+      </button>
+      <button class="suggestion-card" data-prompt="Help me break down a complex Python scripting problem I'm stuck on.">
+        <span>&#9670;</span>
+        <div><strong>Analyze a problem</strong><small>Break down a complex challenge</small></div>
+      </button>
+      <button class="suggestion-card" data-prompt="Brainstorm different approaches I could take to automate a repetitive task.">
+        <span>&#8599;</span>
+        <div><strong>Explore possibilities</strong><small>Brainstorm new approaches</small></div>
+      </button>
+    </div>
+  </div>
+</template>
+
+<!-- Server-rendered initial state, so the JS doesn't need a round trip
+     on first paint. All state changes after this go through /api/*. -->
+<script id="initial-state" type="application/json">{{ initial_state | tojson | safe }}</script>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
